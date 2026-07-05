@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { RouterView } from 'vue-router';
+</script>
+
 <template>
-  <main>Markdown 中英文转换工具</main>
+  <RouterView />
 </template>
