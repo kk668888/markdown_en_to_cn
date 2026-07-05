@@ -16,7 +16,9 @@ import { copyText } from '@/shared/utils/copyText';
 import { downloadMarkdown } from '@/shared/utils/downloadMarkdown';
 import { readMarkdownFile } from '@/shared/utils/readMarkdownFile';
 
+import { freeTranslator } from '../../../adapters/freeTranslator';
 import { mockTranslator } from '../../../adapters/mockTranslator';
+import type { TranslatorAdapter } from '../../../adapters/translator.types';
 import { buildTranslationJobs } from '../../../core/buildTranslationJobs';
 import { collectMarkdownStats } from '../../../core/collectMarkdownStats';
 import { composeOutput } from '../../../core/composeOutput';
@@ -32,6 +34,15 @@ function createInitialStats() {
     translatableBlocks: 0,
     skippedBlocks: 0,
   };
+}
+
+/**
+ * 根据 app.config.translator 选择翻译引擎。
+ * 默认走免费在线引擎（freeTranslator）；
+ * 网络受限或离线调试时，把配置改为 'mock' 即回退到 mockTranslator。
+ */
+function resolveTranslator(): TranslatorAdapter {
+  return appConfig.translator === 'mock' ? mockTranslator : freeTranslator;
 }
 
 export function useMarkdownWorkspace() {
@@ -81,14 +92,16 @@ export function useMarkdownWorkspace() {
       }
 
       state.status = 'translating';
-      const results = await mockTranslator.translate({ direction: state.direction, jobs });
+      const results = await resolveTranslator().translate({ direction: state.direction, jobs });
       state.result = composeOutput({ segments, results, outputMode: state.outputMode });
       state.elapsedMs = Math.round(performance.now() - startedAt);
       state.status = 'completed';
     } catch (error) {
       console.error('[convertMarkdown]', error);
       state.status = 'failed';
-      state.errorMessage = '转换失败，请稍后重试';
+      // 透传引擎层抛出的具体原因（如「不支持中文→英文」），让用户看到可操作的信息
+      state.errorMessage =
+        error instanceof Error && error.message ? error.message : '转换失败，请稍后重试';
     }
   }
 
