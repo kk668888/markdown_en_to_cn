@@ -16,9 +16,9 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
 }>();
 
-function updateValue(event: Event): void {
-  const target = event.target as HTMLTextAreaElement;
-  emit('update:modelValue', target.value);
+// a-textarea 的 update:value 事件携带最新字符串值（ant-design-vue v-model:value 协议）
+function updateValue(value: string): void {
+  emit('update:modelValue', value);
 }
 </script>
 
@@ -31,7 +31,7 @@ function updateValue(event: Event): void {
       :value="modelValue"
       class="min-h-0 flex-1 resize-none border-0 font-mono text-sm"
       placeholder="粘贴 Markdown 内容，或点击导入 .md"
-      @input="updateValue"
+      @update:value="updateValue"
     />
   </section>
 </template>
