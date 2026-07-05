@@ -7,19 +7,25 @@
  *   - result 为空 → 显示空状态
  *   - 正常 → 显示源码 / 预览 Tab
  *
- * 预览采用纯文本排版（whitespace-pre-wrap），首版不引入 Markdown 渲染依赖；
- * 若后续需要渲染富文本，可在此处接入 markdown-it（见计划 Self-Review 风险说明）。
+ * 预览：用 markdown-it 把结果渲染为 HTML 后 v-html 展示（renderMarkdown 内部 html:false，
+ * 已转义危险字符，避免 XSS）。样式来自全局 .markdown-preview（见 shared/styles/markdown.css）。
  */
+
+import { computed } from 'vue';
 
 import BaseEmpty from '@/shared/components/BaseEmpty.vue';
 import BaseError from '@/shared/components/BaseError.vue';
+import { renderMarkdown } from '@/shared/utils/renderMarkdown';
 
 interface Props {
   result: string;
   errorMessage: string;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+
+// 把 Markdown 结果渲染为 HTML；computed 缓存，result 不变时不重复渲染
+const renderedHtml = computed(() => renderMarkdown(props.result));
 </script>
 
 <template>
@@ -38,9 +44,8 @@ defineProps<Props>();
           >{{ result }}</pre>
         </a-tab-pane>
         <a-tab-pane key="preview" tab="预览">
-          <article
-            class="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded border border-slate-200 p-4 text-sm leading-relaxed text-slate-800"
-          >{{ result }}</article>
+          <!-- v-html 内容由 renderMarkdown 生成，html:false 已防 XSS -->
+          <article class="markdown-preview max-h-[60vh] overflow-auto p-1" v-html="renderedHtml" />
         </a-tab-pane>
       </a-tabs>
     </div>

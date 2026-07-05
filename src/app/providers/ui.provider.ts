@@ -14,6 +14,7 @@ import type { App } from 'vue';
 
 import 'ant-design-vue/dist/reset.css';
 import '@/shared/styles/tailwind.css';
+import '@/shared/styles/markdown.css';
 
 /**
  * 注册本应用实际使用到的 ant-design-vue 组件。
